@@ -1,14 +1,15 @@
-import mlflow
 import argparse
 import glob
 import os
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import roc_curve
+
 import matplotlib.pyplot as plt
+import mlflow
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.model_selection import train_test_split
+
 
 def main(args):
     # read data
@@ -23,6 +24,7 @@ def main(args):
     # evaluate model
     eval_model(model, X_test, y_test)
 
+
 def get_data(path):
     # function that reads the data from a file or a folder of CSV files
     print("Reading data...")
@@ -30,73 +32,93 @@ def get_data(path):
     if os.path.isdir(path):
         csv_files = glob.glob(os.path.join(path, "*.csv"))
         if not csv_files:
-            raise RuntimeError(f"No CSV files found in provided data path: {path}")
+            raise RuntimeError(
+                f"No CSV files found in provided data path or what: {path}"
+            )
         df = pd.concat((pd.read_csv(f) for f in csv_files), ignore_index=True)
     else:
         df = pd.read_csv(path)
 
     return df
 
+
 # function that splits the data
 def split_data(df):
     print("Splitting data...")
-    X, y = df[['Pregnancies','PlasmaGlucose','DiastolicBloodPressure','TricepsThickness',
-    'SerumInsulin','BMI','DiabetesPedigree','Age']].values, df['Diabetic'].values
+    X, y = (
+        df[
+            [
+                "Pregnancies",
+                "PlasmaGlucose",
+                "DiastolicBloodPressure",
+                "TricepsThickness",
+                "SerumInsulin",
+                "BMI",
+                "DiabetesPedigree",
+                "Age",
+            ]
+        ].values,
+        df["Diabetic"].values,
+    )
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.30, random_state=0
+    )
 
     return X_train, X_test, y_train, y_test
+
 
 # function that trains the model
 def train_model(reg_rate, X_train, X_test, y_train, y_test):
     mlflow.log_param("Regularization rate", reg_rate)
     print("Training model...")
-    model = LogisticRegression(C=1/reg_rate, solver="liblinear").fit(X_train, y_train)
+    model = LogisticRegression(C=1 / reg_rate, solver="liblinear").fit(X_train, y_train)
 
     return model
+
 
 # function that evaluates the model
 def eval_model(model, X_test, y_test):
     # calculate accuracy
     y_hat = model.predict(X_test)
     acc = np.average(y_hat == y_test)
-    print('Accuracy:', acc)
+    print("Accuracy:", acc)
     mlflow.log_metric("Accuracy", acc)
 
     # calculate AUC
     y_scores = model.predict_proba(X_test)
-    auc = roc_auc_score(y_test,y_scores[:,1])
-    print('AUC: ' + str(auc))
+    auc = roc_auc_score(y_test, y_scores[:, 1])
+    print("AUC: " + str(auc))
     mlflow.log_metric("AUC", auc)
 
     # plot ROC curve
-    fpr, tpr, thresholds = roc_curve(y_test, y_scores[:,1])
+    fpr, tpr, thresholds = roc_curve(y_test, y_scores[:, 1])
     fig = plt.figure(figsize=(6, 4))
     # Plot the diagonal 50% line
-    plt.plot([0, 1], [0, 1], 'k--')
+    plt.plot([0, 1], [0, 1], "k--")
     # Plot the FPR and TPR achieved by our model
     plt.plot(fpr, tpr)
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('ROC Curve')
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("ROC Curve")
     plt.savefig("ROC-Curve.png")
-    mlflow.log_artifact("ROC-Curve.png")    
+    mlflow.log_artifact("ROC-Curve.png")
+
 
 def parse_args():
     # setup arg parser
     parser = argparse.ArgumentParser()
 
     # add arguments
-    parser.add_argument("--training_data", dest='training_data',
-                        type=str)
-    parser.add_argument("--reg_rate", dest='reg_rate',
-                        type=float, default=0.01)
+    parser.add_argument("--training_data", dest="training_data", type=str)
+    parser.add_argument("--reg_rate", dest="reg_rate", type=float, default=0.01)
 
     # parse args
     args = parser.parse_args()
 
     # return args
     return args
+
 
 # run script
 if __name__ == "__main__":
