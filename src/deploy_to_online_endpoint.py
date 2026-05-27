@@ -38,7 +38,7 @@ def ensure_endpoint(ml_client: MLClient, endpoint_name: str) -> ManagedOnlineEnd
         endpoint = ml_client.online_endpoints.get(name=endpoint_name)
         return endpoint
     except Exception:
-        unique_suffix = "non"
+        unique_suffix = "non1"
         name = f"{endpoint_name}-{unique_suffix}"
 
         endpoint = ManagedOnlineEndpoint(
