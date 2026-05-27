@@ -55,16 +55,24 @@ def create_or_update_deployment(
     endpoint_name: str,
     deployment_name: str,
 ) -> ManagedOnlineDeployment:
-    model = Model(
-        path="./model",
-        type=AssetTypes.MLFLOW_MODEL,
-        description="MLflow diabetes classification model",
+
+    # ✅ Register model (no inline build)
+    model = ml_client.models.create_or_update(
+        Model(
+            name="diabetes-model",
+            path="./model",
+            type=AssetTypes.MLFLOW_MODEL,
+        )
     )
+
+    # ✅ Use prebuilt environment
+    environment = "AzureML-sklearn-1.0-ubuntu20.04-py38-cpu:1"
 
     deployment = ManagedOnlineDeployment(
         name=deployment_name,
         endpoint_name=endpoint_name,
         model=model,
+        environment=environment,
         instance_type="Standard_D2as_v4",
         instance_count=1,
     )
