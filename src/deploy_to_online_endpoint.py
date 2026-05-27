@@ -61,10 +61,15 @@ def create_or_update_deployment(
         description="MLflow diabetes classification model",
     )
 
+    env = ml_client.environments.get(
+        name="DefaultNcdEnv-mlflow-ubuntu20-04-py38-cpu-inference",
+        label="latest",
+    )
+
     deployment = ManagedOnlineDeployment(
         name=deployment_name,
         endpoint_name=endpoint_name,
-        environment="azureml:DefaultNcdEnv-mlflow-ubuntu20-04-py38-cpu-inference:147f36ccb4a1f386fed338124309f98d3573de4be202f2370c7fa8913b868b88",
+        environment=env,
         model=model,
         instance_type="Standard_D2as_v4",
         instance_count=1,
