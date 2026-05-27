@@ -1,10 +1,10 @@
-from azure.identity import DefaultAzureCredential
-from azure.ai.ml import MLClient
-from azure.ai.ml.entities import ManagedOnlineEndpoint, ManagedOnlineDeployment, Model
-from azure.ai.ml.constants import AssetTypes
-
 import argparse
 import datetime
+
+from azure.ai.ml import MLClient
+from azure.ai.ml.constants import AssetTypes
+from azure.ai.ml.entities import ManagedOnlineDeployment, ManagedOnlineEndpoint, Model
+from azure.identity import DefaultAzureCredential
 
 
 def parse_args():
@@ -13,13 +13,17 @@ def parse_args():
     parser.add_argument("--subscription-id", dest="subscription_id", required=True)
     parser.add_argument("--resource-group", dest="resource_group", required=True)
     parser.add_argument("--workspace", dest="workspace", required=True)
-    parser.add_argument("--endpoint-name", dest="endpoint_name", default="diabetes-endpoint")
+    parser.add_argument(
+        "--endpoint-name", dest="endpoint_name", default="diabetes-endpoint"
+    )
     parser.add_argument("--deployment-name", dest="deployment_name", default="blue")
 
     return parser.parse_args()
 
 
-def get_ml_client(subscription_id: str, resource_group: str, workspace: str) -> MLClient:
+def get_ml_client(
+    subscription_id: str, resource_group: str, workspace: str
+) -> MLClient:
     credential = DefaultAzureCredential()
     return MLClient(
         credential=credential,
@@ -35,7 +39,7 @@ def ensure_endpoint(ml_client: MLClient, endpoint_name: str) -> ManagedOnlineEnd
         return endpoint
     except Exception:
         unique_suffix = datetime.datetime.now().strftime("%m%d%H%M%f")
-        name = endpoint_name or f"endpoint-{unique_suffix}"
+        name = f"{endpoint_name}-{unique_suffix}-01"
 
         endpoint = ManagedOnlineEndpoint(
             name=name,
@@ -68,7 +72,9 @@ def create_or_update_deployment(
     return ml_client.online_deployments.begin_create_or_update(deployment).result()
 
 
-def set_traffic_to_deployment(ml_client: MLClient, endpoint_name: str, deployment_name: str) -> None:
+def set_traffic_to_deployment(
+    ml_client: MLClient, endpoint_name: str, deployment_name: str
+) -> None:
     endpoint = ml_client.online_endpoints.get(name=endpoint_name)
     endpoint.traffic = {deployment_name: 100}
     ml_client.begin_create_or_update(endpoint).result()
