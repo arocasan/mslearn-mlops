@@ -64,7 +64,7 @@ def create_or_update_deployment(
     deployment = ManagedOnlineDeployment(
         name=deployment_name,
         endpoint_name=endpoint_name,
-        environment="azureml:AzureML-sklearn-1.0-ubuntu20.04-py38-cpu:1",
+        environment="azureml:DefaultNcdEnv-mlflow-ubuntu20-04-py38-cpu-inference@latest",
         model=model,
         instance_type="Standard_D2as_v4",
         instance_count=1,
